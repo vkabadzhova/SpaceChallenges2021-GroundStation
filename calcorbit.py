@@ -7,44 +7,62 @@ import serial.tools.list_ports as listports
 import time
 
 
-scheduled_time = datetime.utcnow();
-length = 240 # number of hours to find next passes
-precision=.001 #  precision of the result in seconds
-horizon = 0 # elevation of horizon to compute risetime and falltime
+def print_next_passes(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(), length=240, tolerance=.001, horizon=0):
+	"""Calculate next step for the rotator
 
-Re=6378.137
-gela=(41.6572860, 24.5745002, 1.500) #lon lat alt in km
-gelaLon, gelaLat, gelaAlt = gela
+		:scheduled_time: Satellite's tracking starting time
+		:length: Number of hours to find next passes
+		:tolerance: Precision of the result in seconds
+		:horizon: Elevation of horizon to compute risetme and falltime
+		:return: Angles for the Arduino rotator - azimuth, elevation 
+	"""
 
-sat=Orbital("QMR-KWT") #should be based on satellite name
+	Re=6378.137                             # Earth's radius
+	gela=(41.6572860, 24.5745002, 1.500)    # Coordinates of Gela, Bulgaria 
+	gelaLon, gelaLat, gelaAlt = gela
 
-#get az and el towards satellite
-azimuth, elevation = sat.get_observer_look(scheduled_time,gelaLon, gelaLat, gelaAlt)
+	sat=Orbital(sat_name)
+	#get az and el towards satellite
+	azimuth, elevation = sat.get_observer_look(scheduled_time,gelaLon, gelaLat, gelaAlt)
 
-#print rise, max elevation and set time of next passes in the next <length> hours
-nextPass = sat.get_next_passes(scheduled_time, length, gelaLon, gelaLat, gelaAlt, tol=precision, horizon=horizon)
-for passes in nextPass:
-	for passes in passes:
-		print(passes)
-	print('')
-
-
-port='COM4' #default port
-#detect arduino port
-ports=list(listports.comports())
-if len(ports) == 0:
+	#print rise, max elevation and set time of next passes in the next <length> hours
+	nextPass = sat.get_next_passes(scheduled_time, length, gelaLon, gelaLat, gelaAlt, tol=tolerance, horizon=horizon)
+	for passes in nextPass:
+		for passes in passes:
+			print(passes)
+		print('')
 	
-for p in ports:
-	p=str(p)
-	if 'arduino' in p.lower():
-		port = p.split()[0]
-		print(port)
-		break
-ser = serial.Serial(port, 9600)
-time.sleep(.1) #for some reason it doesnt work without this delay
+	return azimuth, elevation
+	
 
-def rotate(az,el): #send str to serial from two nums; ex. output: b'124.40,-34.18'
-    ser.write(f'{az},{el}'.encode())
+
+def serial_connect_arduino():
+	"""
+		Realize serial communication with the Arduino  
+	"""
+	
+	port='COM4' #default port
+	
+	#detect arduino port
+	ports=list(listports.comports())
+	for p in ports:
+		p=str(p)
+		if 'arduino' in p.lower():
+			port = p.split()[0]
+			print(port)
+			break
+			
+	ser = serial.Serial(port, 9600)
+	time.sleep(.1) # does not work without the delay
+	return ser
+
+
+def rotate(ser, az, el): #send str to serial from two nums; ex. output: b'124.40,-34.18'
+	ser.write(f'{az},{el}'.encode())
+
+
+azimuth, elevation = print_next_passes()
+ser = serial_connect_arduino()
 
 print(azimuth,elevation)
-rotate(azimuth,elevation)
+rotate(ser, azimuth, elevation)
