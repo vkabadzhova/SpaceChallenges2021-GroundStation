@@ -8,14 +8,21 @@
 */
 #include "StepperMotor.h"
 
+#define STEP_SIZE 2048 // !!! how may steps do you need to make a full revolution
+
 #define STEPPER_PIN_1 10
 #define STEPPER_PIN_2 9
 #define STEPPER_PIN_3 6
 #define STEPPER_PIN_4 5
 
+
+
 long timeVar = 0;
 long prevMillis = 0;
 long millisPrint = 0;
+
+double rx=0;
+double ry=0;
     
 StepperMotor StepMotor; 
 void setup() {
@@ -25,47 +32,35 @@ pinMode(LED_BUILTIN, OUTPUT);
  StepMotor.initStepper(STEPPER_PIN_1, STEPPER_PIN_2,STEPPER_PIN_3,  STEPPER_PIN_4);
 
 }
-double az = 0;
-double el = 0;
-bool azimuthdone = false;
+double getSignedAngle(double angle) {
+  angle-=((int)angle/360)*360;
+  if (angle>180)
+    angle-=360;
+   else if (angle<-180)
+    angle+=360;
+  return angle;
+}
 void loop() {
   // put your main code here, to run repeatedly:
+  
   if (Serial.available() >0){
-//    digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-//    delay(1000);                       // wait for a second
-//    digitalWrite(LED_BUILTIN, LOW);
     String s = Serial.readString();
     String s1 = s.substring(0,s.indexOf(","));
     String s2 = s.substring(s.indexOf(",")+1);
+    
+    double az,el;
     az = s1.toDouble(); //azimuth
-    el = s2.toDouble(); //elevation
-    Serial.print("az: ");
-    Serial.println(az);
-    Serial.print("el: ");
-    Serial.println(el);
-    // The code belows rotates the servo 2 times with the maximum speed(2ms between step)
-    // then it rotates reverse with same speed
-  /*
-  StepMotor.rotateSteps(true, 1024, 4);
-  delay(2000);
-  */
-   
-    
-   
-    }
-    
-    if(abs(az)>0){
-    az-=11.0/64*(az>0?1:-1);
-    StepMotor.rotateSteps(az>0,1,4);
-    delay(1);
-   }
-   else if (abs(el)>0) {
-    if (!azimuthdone){
-      delay(1000);
-      azimuthdone=true;
-    }
-    el-=11.0/64*(el>0?1:-1);
-    StepMotor.rotateSteps(el>0,1,4);
-    delay(1);
-   }
+    el = s2.toDouble(); //elevation 
+    double dx = getSignedAngle(-(rx-az));
+    double dy = getSignedAngle(-(ry-el));
+    StepMotor.rotateSteps(dx>0,abs(dx*STEP_SIZE/360.0),3); //direction, steps, microsspeed (3 is best)
+    delay(1000);
+    StepMotor.rotateSteps(dy>0,abs(dy*STEP_SIZE/360.0),3); // 1 step is 1/2048 revs
+    rx=az;
+    ry=el;
+    Serial.print("Rx: ");
+    Serial.println(rx);
+    Serial.print("Ry: ");
+    Serial.println(ry);
+  }
 }
