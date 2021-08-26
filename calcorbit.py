@@ -36,7 +36,7 @@ def print_next_passes(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(), leng
 	
 
 
-def serial_connect_arduino():
+def init_arduino_serial_connection():
 	"""
 		Realize serial communication with the Arduino  
 	"""
@@ -61,8 +61,9 @@ def rotate(ser, az, el): #send str to serial from two nums; ex. output: b'124.40
 	ser.write(f'{az},{el}'.encode())
 
 
-azimuth, elevation = print_next_passes()
-ser = serial_connect_arduino()
+def init_tracking():
+    azimuth, elevation = print_next_passes()
+    ser = init_arduino_serial_connection()
 
-print(azimuth,elevation)
-rotate(ser, azimuth, elevation)
+    print(azimuth,elevation)
+    rotate(ser, azimuth, elevation)
