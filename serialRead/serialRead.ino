@@ -9,13 +9,21 @@
 #include "StepperMotor.h"
 
 #define STEP_SIZE 2048 // !!! how may steps do you need to make a full revolution
+#define STEP_DELAY 2 // fastest possible for current motor
 
 #define STEPPER_PIN_1 10
 #define STEPPER_PIN_2 9
 #define STEPPER_PIN_3 6
 #define STEPPER_PIN_4 5
 
+#define STEPPER_PIN_5 7
+#define STEPPER_PIN_6 2
+#define STEPPER_PIN_7 3
+#define STEPPER_PIN_8 4
 
+#define HOME_X_PIN 8 
+#define HOME_Y_PIN 11
+#define HOME_Y45_PIN 12
 
 long timeVar = 0;
 long prevMillis = 0;
@@ -24,12 +32,16 @@ long millisPrint = 0;
 double rx=0;
 double ry=0;
     
-StepperMotor StepMotor; 
+StepperMotor StepMotor1;
+StepperMotor StepMotor2; 
 void setup() {
   // put your setup code here, to run once:
 Serial.begin(9600);
-pinMode(LED_BUILTIN, OUTPUT);
- StepMotor.initStepper(STEPPER_PIN_1, STEPPER_PIN_2,STEPPER_PIN_3,  STEPPER_PIN_4);
+pinMode(HOME_X_PIN, INPUT);
+pinMode(HOME_Y_PIN, INPUT);
+pinMode(HOME_Y45_PIN, INPUT);
+ StepMotor1.initStepper(STEPPER_PIN_1, STEPPER_PIN_2,STEPPER_PIN_3,  STEPPER_PIN_4);
+ StepMotor2.initStepper(STEPPER_PIN_5, STEPPER_PIN_6,STEPPER_PIN_7,  STEPPER_PIN_8);
 
 }
 double getSignedAngle(double angle) {
@@ -40,27 +52,57 @@ double getSignedAngle(double angle) {
     angle+=360;
   return angle;
 }
+bool risingEdgeX = false;
+bool risingEdgeY = false;
+bool risingEdgeY45 = false;
 void loop() {
   // put your main code here, to run repeatedly:
   
-  if (Serial.available() >0){
-    String s = Serial.readString();
-    String s1 = s.substring(0,s.indexOf(","));
-    String s2 = s.substring(s.indexOf(",")+1);
-    
-    double az,el;
-    az = s1.toDouble(); //azimuth
-    el = s2.toDouble(); //elevation 
-    double dx = getSignedAngle(-(rx-az));
-    double dy = getSignedAngle(-(ry-el));
-    StepMotor.rotateSteps(dx>0,abs(dx*STEP_SIZE/360.0),3); //direction, steps, microsspeed (3 is best)
-    delay(1000);
-    StepMotor.rotateSteps(dy>0,abs(dy*STEP_SIZE/360.0),3); // 1 step is 1/2048 revs
-    rx=az;
-    ry=el;
-    Serial.print("Rx: ");
-    Serial.println(rx);
-    Serial.print("Ry: ");
-    Serial.println(ry);
+  
+  if (Serial.available() <= 0){ return;}
+  String s = Serial.readString();
+  String s1 = s.substring(0,s.indexOf(","));
+  String s2 = s.substring(s.indexOf(",")+1);
+  
+  double az,el;
+  az = s1.toDouble(); //azimuth
+  el = s2.toDouble(); //elevation 
+  double dx = getSignedAngle(-(rx-az));
+  double dy = getSignedAngle(-(ry-el))*-1;
+  int stepsx = abs(dx/360*STEP_SIZE);
+  int stepsy = abs(dy/360*STEP_SIZE);
+  int loopsize = max(stepsx,stepsy);
+     
+  for (int i=0; i<loopsize; i++){
+    if(stepsx>0){
+      stepsx--;
+      StepMotor1.OneStep(dx>0);
+      rx=getSignedAngle(rx+360.0/STEP_SIZE*(dx>0 ? 1 : -1 ));
+    }
+    if(stepsy>0){
+      stepsy--;
+      StepMotor2.OneStep(dy>0);  
+      ry=getSignedAngle(ry + 360.0/STEP_SIZE*(dy<0 ? 1 : -1 ));
+    }
+    risingEdgeX = digitalRead(HOME_X_PIN);
+    delay(STEP_DELAY);
+    if(digitalRead(HOME_X_PIN) and !risingEdgeX) {
+      rx=-50;
+      Serial.println("Reset RX"); 
+    }
+    if(digitalRead(HOME_Y_PIN) and !risingEdgeY) {
+      ry=0;
+      Serial.println("Reset RY"); 
+    }
+    if(digitalRead(HOME_Y45_PIN) and !risingEdgeY45) {
+      ry=45;
+      Serial.println("Reset RY"); 
+    }
   }
+  Serial.print("Rx: ");
+  Serial.println(rx);
+  Serial.print("Ry: ");
+  Serial.println(ry);
+
+  //end
 }
