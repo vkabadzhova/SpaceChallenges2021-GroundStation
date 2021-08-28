@@ -3,6 +3,7 @@ import time
 import sys
 import datetime
 import calcorbit
+import pyorbital
 
 def print_usage():
     print("python3 -c [satName] [%dd/%mm/%yy_%HH:%MM:%SS]")
@@ -10,6 +11,7 @@ def print_usage():
 
 def update_sat_data():
     print("updating data job")
+    pyorbital.tlefile.fetch("tle.txt")
 
 
 def start_tracking_procedures(updating_job):
@@ -24,7 +26,15 @@ def start_tracking_procedures(updating_job):
 
     print("Start tracking procedures in progress")
     schedule.cancel_job(updating_job)
-    update_sat_data()
+    
+    is_updated_successfully = False
+    while not is_updated_successfully:
+        try:
+            update_sat_data()
+            is_update_successfully = True
+        except Exception as exc:
+            print(exc)
+
     calcorbit.init_tracking()
     return schedule.CancelJob
 
@@ -35,7 +45,9 @@ def schedule_start(reservation_time, updating_job):
     :reservation time: datetime of the booked time for using the ground station 
     :updating_job: the job which updates the data for the satellite
     """
-    reservation_time_str = reservation_time.strftime("%H:%M:%S")
+    # schedule the start 3 minutes prior to the event in order to try to download the tle files
+    new_reservation_time = reservation_time - datetime.timedelta(seconds=3) 
+    reservation_time_str = new_reservation_time.strftime("%H:%M:%S")
     schedule.every().day.at(reservation_time_str).do(start_tracking_procedures, updating_job)
 
 
