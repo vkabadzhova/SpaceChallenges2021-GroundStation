@@ -63,9 +63,9 @@ def rotate(ser, az, el): #send str to serial from two nums; ex. output: b'124.40
 	ser.write(f'{az},{el}'.encode())
 
 
-def init_tracking():
-    azimuth, elevation = get_next_coordinates()
-    ser = init_arduino_serial_connection()
+def init_tracking(sat_name, reservation_datetime):
+    azimuth, elevation = get_next_coordinates(sat_name)
+    # ser = init_arduino_serial_connection()
 
     print(azimuth,elevation)
-    rotate(ser, azimuth, elevation)
+    # rotate(ser, azimuth, elevation)
