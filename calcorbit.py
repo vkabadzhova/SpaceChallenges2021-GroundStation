@@ -8,7 +8,7 @@ import time
 
 
 # def get_next_coordinates(sat_name='QMR-KWT', tle_file=None, scheduled_time=datetime.utcnow(), length=240, tolerance=.001, horizon=0):
-def get_next_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(), length=240, tolerance=.001, horizon=0):
+def get_next_sat_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(), length=240, tolerance=.001, horizon=0):
 	"""Calculate next step for the rotator
 
 		:scheduled_time: Satellite's tracking starting time
@@ -27,9 +27,9 @@ def get_next_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(), l
 	azimuth, elevation = sat.get_observer_look(scheduled_time,gelaLon, gelaLat, gelaAlt)
 
 	#print rise, max elevation and set time of next passes in the next <length> hours
-	nextPass = sat.get_next_passes(scheduled_time, length, gelaLon, gelaLat, gelaAlt, tol=tolerance, horizon=horizon)
 	"""
-        for passes in nextPass:
+	nextPass = sat.get_next_passes(scheduled_time, length, gelaLon, gelaLat, gelaAlt, tol=tolerance, horizon=horizon)
+    for passes in nextPass:
 		for passes in passes:
 			print(passes)
 		print('')
@@ -64,7 +64,7 @@ def rotate(ser, az, el): #send str to serial from two nums; ex. output: b'124.40
 
 
 def init_tracking(sat_name, reservation_datetime):
-    azimuth, elevation = get_next_coordinates(sat_name)
+    azimuth, elevation = get_next_sat_coordinates(sat_name)
     # ser = init_arduino_serial_connection()
 
     print(azimuth,elevation)
