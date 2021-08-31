@@ -1,18 +1,34 @@
+import os
+import tempfile
 import schedule
 import time
 import sys
 import datetime
 import calcorbit
+import pyorbital
+from urllib import error
+import logging
+
 
 def print_usage():
     print("python3 -c [satName] [%dd/%mm/%yy_%HH:%MM:%SS]")
 
 
 def update_sat_data():
-    print("updating data job")
+    logging.debug("Updating tle")
+    try:
+        tmp_tle_filename = tempfile.NamedTemporaryFile().name
+        pyorbital.tlefile.fetch(tmp_tle_filename)
+        logging.info("TLE successfully updated")
+        tle_genuine_filename = "tle.txt"
+        os.replace(tmp_tle_filename, tle_genuine_filename)
+        logging.debug(tmp_tle_filename + " successfully renamed to " + tle_genuine_filename + " - Information updated")
+    except error.URLError as err:
+        message = "Could not update TLE file - " + str(err)
+        logging.warning(message)
 
 
-def start_tracking_procedures(updating_job):
+def start_tracking_procedures(sat_name):
     """ Starts all procedures related to the sat tracking per se.
     Runs initializers, tries to download latest data about the satellite,
     connects to the Arduino through serial communication.
@@ -22,51 +38,60 @@ def start_tracking_procedures(updating_job):
     :return: the current job already canceled
     """
 
-    print("Start tracking procedures in progress")
-    schedule.cancel_job(updating_job)
+    logging.info("Tracking procedures for " + sat_name + " in progress")
+
     update_sat_data()
-    calcorbit.init_tracking()
+
+    calcorbit.init_tracking(sat_name, reservation_datetime)
     return schedule.CancelJob
 
 
-def schedule_start(reservation_time, updating_job):
+def schedule_start(sat_name, reservation_time):
     """ Scheduler for the beginning of the satellite tracking procedures
 
+    :sat_name: the name of the satellite to be tracked, e.g. "QMR-KWT"
     :reservation time: datetime of the booked time for using the ground station 
-    :updating_job: the job which updates the data for the satellite
     """
-    reservation_time_str = reservation_time.strftime("%H:%M:%S")
-    schedule.every().day.at(reservation_time_str).do(start_tracking_procedures, updating_job)
+
+    logging.info("Satellite's tracking scheduled")
+
+    # schedule the start 3 minutes prior to the event in order to try to download the tle files
+    new_reservation_time = reservation_time - datetime.timedelta(seconds=3)
+    reservation_time_str = new_reservation_time.strftime("%H:%M:%S")
+    schedule.every().day.at(reservation_time_str).do(start_tracking_procedures, sat_name)
 
 
 def schedule_downloads():
-    """ Schedules the downloads of the information for the satellite
-    to repeat once a week until the beginning of the event
+    """ Schedules the update of the tle file for once a week
 
     :return: the scheduling job
     """
-    return schedule.every(2).seconds.do(update_sat_data)
+
+    schedule.every(10).seconds.do(update_sat_data)
+    logging.info("Updating TLE scheduled")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s     %(levelname)s:%(message)s', level=logging.DEBUG)
+
     # default satellite for tracking - QMR-KWT
     sat_name = 'QMR-KWT'
+
     # default reservation time - now + 1 min
-    reservation_datetime = datetime.datetime.now() + datetime.timedelta(seconds=10) 
+    reservation_datetime = datetime.datetime.now() + datetime.timedelta(seconds=20)
 
-    print(len(sys.argv)) 
+    print(len(sys.argv))
 
-    if (len(sys.argv) >= 3):
+    if len(sys.argv) >= 3:
         sat_name = sys.argv[2]
         reservation_datetime = datetime.datetime.strptime(sys.argv[3], '%d/%m/%y_%H:%M:%S')
-    
+
     print(sat_name)
     print(reservation_datetime)
 
-    updating_job = schedule_downloads()
-    schedule_start(reservation_datetime, updating_job)
+    schedule_downloads()
+    schedule_start(sat_name, reservation_datetime)
 
     while True:
         schedule.run_pending()
         time.sleep(1)
-
