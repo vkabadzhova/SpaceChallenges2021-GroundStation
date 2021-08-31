@@ -19,7 +19,7 @@ def get_next_sat_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(
 	"""
 
 	Re=6378.137                             # Earth's radius
-	gela=(41.6572860, 24.5745002, 1.500)    # Coordinates of Gela, Bulgaria 
+	gela=(24.5730, 41.6500015, 1.463)    # Coordinates of Gela, Bulgaria 
 	gelaLon, gelaLat, gelaAlt = gela
 
 	sat=Orbital(sat_name, "tle.txt")
