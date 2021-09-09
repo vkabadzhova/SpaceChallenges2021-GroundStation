@@ -89,12 +89,13 @@ def main():
 	ser = init_arduino_serial_connection(port[0])
 
 	while(True):
-		sat_name = "QMR-KWT"
+		sat_name = "UNISAT-6"
 		time_now = datetime.utcnow()
 		azimuth, elevation = get_next_sat_coordinates(sat_name, time_now)
-		az = ('%.1f') % azimuth
-		el = ('%.1f') % elevation
-		rotate(ser, az, el)
+		if (el > 0):
+			az = ('%.1f') % azimuth
+			el = ('%.1f') % elevation
+			rotate(ser, az, el)
 		time.sleep(10)
 
 if __name__ == "__main__":
