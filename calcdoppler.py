@@ -44,10 +44,38 @@ def getDopplerShift(f,Vsx,Vo=0): #difference in frequencies (in KHz) for station
 
 
 def main():
+	global el
+	el = 89.9
 	earth_radius = getRadiusFromLatitude(lat)
 	gamma = getAngleToObserver(earth_radius, altitude_gs, altitude_sat, el)
 	Vs_x = cos(getAngleToObserver(earth_radius, altitude_gs, altitude_sat, el) + np.deg2rad(el)) * getSatelliteVelocity(sat,datetime.utcnow())
 	print(getDopplerShift(frequency, Vs_x),'KHz')
+
+	h = 400e3
+	earth_radius = earth_radius * 10**3
+	x = getDistanceToObserver(earth_radius, 1.463, h)
+	
+
+	c = np.sqrt(2 * ((h+earth_radius) **2) - 2 * ((h+earth_radius) **2) * np.cos(gamma))
+
+	arc = 2 * np.pi * (h+earth_radius) * (np.rad2deg(gamma) / 360)
+	print("radius", earth_radius)
+
+	v = 7.8e3
+
+	t = arc / v
+
+	print(arc)
+
+	print(x, h, c)
+	phi = np.arccos((x ** 2 + h ** 2 - c ** 2) / (2 * x * h)) # rad
+
+	result = phi / t
+
+	print(result)
+
+
+
 
 if __name__ == "__main__":
     main()

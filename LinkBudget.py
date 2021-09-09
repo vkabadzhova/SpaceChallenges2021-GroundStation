@@ -30,6 +30,7 @@ La = 1  # [dB]
 Lp = 3  # [dB]
 Ls = 20 * log10(4 * pi * h_max * f / c) #[dB]
 Kb = 228.5 # [dB]
+print(Ls)
 
 def getEbNo():
     Gr_Ts = G_r - 10 * log10(T_s)
