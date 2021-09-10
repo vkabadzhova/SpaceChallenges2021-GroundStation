@@ -101,17 +101,7 @@ def init_arduino_serial_connection(port="COM8"):
 
 
 def rotate(ser, az, el): #send str to serial from two nums; ex. output: b'124.40,-34.18'
-	message = 'AZ{} EL{}'.format(az, el).encode()
+	message = 'AZ{} EL{}\n'.format(az, el).encode()
 	print(message)
-	ser.write(message)
-
-def main():
-	port = serial_ports()
-	try:
-		ser = init_arduino_serial_connection(port[0])
-	except:
-		print('no serial ports available')
-
-
-if __name__ == "__main__":
-	main()
+	if ser is not None:
+		ser.write(message)
