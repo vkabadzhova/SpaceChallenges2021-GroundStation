@@ -19,12 +19,16 @@ def get_next_sat_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(
 	"""
 
 	Re=6378.137                             # Earth's radius
-	gela=(24.5730, 41.6500015, 1.463)    # Coordinates of Gela, Bulgaria 
+	gela=( 24.5730,41.6500015, 1.463)    # Coordinates of Gela, Bulgaria 
 	gelaLon, gelaLat, gelaAlt = gela
+
+	realtime = False
+	if scheduled_time == datetime.utcnow():
+		realtime = True
 
 	sat=Orbital(sat_name, "tle.txt")
 	#get az and el towards satellite
-	azimuth, elevation = sat.get_observer_look(scheduled_time,gelaLon, gelaLat, gelaAlt)
+	azimuth, elevation = sat.get_observer_look(datetime.utcnow() if realtime else scheduled_time,gelaLon, gelaLat, gelaAlt)
 
 	#print rise, max elevation and set time of next passes in the next <length> hours
 	"""
