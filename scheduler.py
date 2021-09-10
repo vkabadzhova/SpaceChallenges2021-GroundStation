@@ -70,13 +70,23 @@ def schedule_start(sat_name, reservation_time):
 
 
 def schedule_downloads():
-    """ Schedules the update of the tle file for once a week
+    """ Schedules the update of the tle file - once a week
 
     :return: the scheduling job
     """
 
     schedule.every(10).seconds.do(update_sat_data)
     logging.info("Updating TLE scheduled")
+
+
+
+def schedule_booking(path):
+    """ Schedules the reading of the bookings once a week
+
+    :return: the scheduling job
+    """
+    schedule.every(10).seconds.do(update_booking_data, path)
+    logging.info("Updating Bookings scheduled")
 
 
 if __name__ == "__main__":
@@ -98,6 +108,7 @@ if __name__ == "__main__":
     print(reservation_datetime)
 
     schedule_downloads()
+    schedule_booking(path)
     schedule_start(sat_name, reservation_datetime)
 
     while True:
