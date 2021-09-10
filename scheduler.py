@@ -108,7 +108,7 @@ if __name__ == "__main__":
     print(reservation_datetime)
 
     schedule_downloads()
-    schedule_booking(path)
+    schedule_booking('../API/')
     schedule_start(sat_name, reservation_datetime)
 
     while True:
