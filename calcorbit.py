@@ -37,7 +37,6 @@ def serial_ports():
             pass
     return result
 
-# def get_next_coordinates(sat_name='QMR-KWT', tle_file=None, scheduled_time=datetime.utcnow(), length=240, tolerance=.001, horizon=0):
 def get_next_sat_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(), length=2, tolerance=.001, horizon=0):
 	"""Calculate next step for the rotator
 
@@ -80,19 +79,22 @@ def init_arduino_serial_connection(port="COM8"):
 
 
 def rotate(ser, az, el): #send str to serial from two nums; ex. output: b'124.40,-34.18'
-	message = 'AZ{} EL{}'.format(az, el).encode()
+	message = 'AZ{} EL{}\n'.format(az, el).encode()
 	print(message)
-	ser.write(message)
+	if ser is not None:
+		ser.write(message)
 
 def main():
 	port = serial_ports()
-	ser = init_arduino_serial_connection(port[0])
+	ser = None
+	#ser = init_arduino_serial_connection(port[0])
 
 	while(True):
-		sat_name = "UNISAT-6"
+		sat_name = "KrakSat"
 		time_now = datetime.utcnow()
 		azimuth, elevation = get_next_sat_coordinates(sat_name, time_now)
-		if (el > 0):
+		print(azimuth, elevation)
+		if (elevation > 0):
 			az = ('%.1f') % azimuth
 			el = ('%.1f') % elevation
 			rotate(ser, az, el)
