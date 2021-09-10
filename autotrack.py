@@ -22,7 +22,7 @@ while 1:
 	name = co.norad_to_name(input("Sat Name: "))
 	print(name)
 	try:
-		az,el = co.get_next_sat_coordinates(name)
+		az,el = co.get_next_sat_coordinates(name,datetime.utcnow())
 		az=az if az <=180 else 360-az
 	except:
 		print("sat not found")
@@ -34,7 +34,7 @@ while 1:
 		except:
 			pass
 	while el > 0:
-		az,el = co.get_next_sat_coordinates(name)
+		az,el = co.get_next_sat_coordinates(name,datetime.utcnow())
 		az=az if az <=180 else 360-az
 		s=f'AZ{round(-az,1)} EL{round(el,1)}\n'.encode()
 		print(round(az,1), round(el,1))

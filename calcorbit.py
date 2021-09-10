@@ -1,12 +1,17 @@
 import pyorbital
 from pyorbital.orbital import Orbital
 from math import *
-from datetime import datetime
+from datetime import datetime, timedelta
 import serial
 import sys
 import glob
 import serial.tools.list_ports as listports
 import time
+from django import template
+
+
+gela=( 24.5730,41.6500015, 1.463)    # Coordinates of Gela, Bulgaria 
+gelaLon, gelaLat, gelaAlt = gela
 
 
 def serial_ports():
@@ -86,8 +91,15 @@ def get_next_sat_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(
 		print('')
 	"""
 	return azimuth, elevation
-	
 
+def get_next_passes_info(sat_name, lon=gelaLon,lat=gelaLat,alt=gelaLat,hours=72,horizon=15, tolerance=.001):
+	sat = Orbital(sat_name,"tle.txt")
+	passes = sat.get_next_passes(datetime.utcnow(), hours, lon, lat, alt, tolerance, horizon)
+	info=[]
+	for p in passes:
+		apogee = sat.get_observer_look(p[2], lon, lat, alt)[1]
+		info.append(((p[0]+timedelta(hours=3)).strftime("%d.%m"),(p[0]+timedelta(hours=3)).strftime("%H:%M"),(p[1]+timedelta(hours=3)).strftime("%H:%M"),apogee))
+	return info
 
 def init_arduino_serial_connection(port="COM8"):
 	"""

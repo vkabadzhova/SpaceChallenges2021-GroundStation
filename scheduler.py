@@ -15,7 +15,7 @@ def print_usage():
     print("python3 -c [satName] [%dd/%mm/%yy_%HH:%MM:%SS]")
 
 
-def update_sat_data():
+def update_tle():
     logging.debug("Updating tle")
     try:
         tmp_tle_filename = tempfile.NamedTemporaryFile().name
@@ -36,7 +36,7 @@ def update_booking_data(path_to_json_files):
         schedule_start(calcorbit.norad_to_name(booking['norad_id']),booking['start_time'])
 
 
-def start_tracking_procedures(sat_name):
+def start_tracking_procedures(sat_name, reservation_datetime):
     """ Starts all procedures related to the sat tracking per se.
     Runs initializers, tries to download latest data about the satellite,
     connects to the Arduino through serial communication.
@@ -48,7 +48,7 @@ def start_tracking_procedures(sat_name):
 
     logging.info("Tracking procedures for " + sat_name + " in progress")
 
-    update_sat_data()
+    update_tle()
 
     calcorbit.init_tracking(sat_name, reservation_datetime)
     return schedule.CancelJob
@@ -62,10 +62,10 @@ def schedule_start(sat_name, reservation_time):
     """
 
     logging.info("Satellite's tracking scheduled")
+    logging.info(type(reservation_time))
 
     # schedule the start 3 minutes prior to the event in order to try to download the tle files
-    reservation_time_str = reservation_time.strftime("%H:%M:%S")
-    schedule.every().day.at(reservation_time_str).do(start_tracking_procedures, sat_name)
+    schedule.every().day.at(reservation_time).do(start_tracking_procedures, sat_name, reservation_time)
 
 
 def schedule_downloads():
@@ -74,7 +74,7 @@ def schedule_downloads():
     :return: the scheduling job
     """
 
-    schedule.every(10).seconds.do(update_sat_data)
+    schedule.every(10).seconds.do(update_tle)
     logging.info("Updating TLE scheduled")
 
 
@@ -107,8 +107,8 @@ if __name__ == "__main__":
     print(reservation_datetime)
 
     schedule_downloads()
-    schedule_booking('../API/')
-    schedule_start(sat_name, reservation_datetime)
+    schedule_booking('../')
+    # schedule_start(sat_name, reservation_datetime)
 
     while True:
         schedule.run_pending()
