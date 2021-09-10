@@ -5,6 +5,7 @@ import time
 import sys
 import datetime
 import calcorbit
+import manage_bookings
 import pyorbital
 from urllib import error
 import logging
@@ -26,6 +27,13 @@ def update_sat_data():
     except error.URLError as err:
         message = "Could not update TLE file - " + str(err)
         logging.warning(message)
+
+
+def update_booking_data(path_to_json_files):
+    logging.debug("Updating bookings")
+    bookings = manage_bookings.read_bookings(path_to_json_files)
+    for booking in bookings:
+        schedule_start(calcorbit.norad_to_name(booking['norad_id']),booking['start_time'])
 
 
 def start_tracking_procedures(sat_name):

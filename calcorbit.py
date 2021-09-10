@@ -37,6 +37,22 @@ def serial_ports():
             pass
     return result
 
+def norad_to_name(norad_id):
+	if type(norad_id) == type('some string'):
+		if norad_id.isdigit():
+			norad_id = int(norad_id)
+		else:
+			return norad_id
+	tlefile_lines=open('tle.txt').read().split('\n')
+	for i in range(len(tlefile_lines)):
+	 	line = tlefile_lines[i]
+	 	if len(line) <= 0 or not line[0] == '1':
+	 		continue
+	 	tle_norad_id = line.split(' ')[1][:-1]
+	 	if tle_norad_id == str(norad_id):
+	 		sat_name = tlefile_lines[i-2].strip()
+	 		return sat_name
+
 # def get_next_coordinates(sat_name='QMR-KWT', tle_file=None, scheduled_time=datetime.utcnow(), length=240, tolerance=.001, horizon=0):
 def get_next_sat_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(), length=2, tolerance=.001, horizon=0):
 	"""Calculate next step for the rotator
@@ -47,7 +63,7 @@ def get_next_sat_coordinates(sat_name='QMR-KWT', scheduled_time=datetime.utcnow(
 		:horizon: Elevation of horizon to compute risetme and falltime
 		:return: Angles for the Arduino rotator - azimuth, elevation 
 	"""
-
+	# sat_name = norad_to_name(sat_name) if type(sat_name) == type(1) else sat_name
 	Re=6378.137                             # Earth's radius
 	gela=( 24.5730,41.6500015, 1.463)    # Coordinates of Gela, Bulgaria 
 	gelaLon, gelaLat, gelaAlt = gela
@@ -91,17 +107,11 @@ def rotate(ser, az, el): #send str to serial from two nums; ex. output: b'124.40
 
 def main():
 	port = serial_ports()
-	ser = init_arduino_serial_connection(port[0])
+	try:
+		ser = init_arduino_serial_connection(port[0])
+	except:
+		print('no serial ports available')
 
-	while(True):
-		sat_name = "UNISAT-6"
-		time_now = datetime.utcnow()
-		azimuth, elevation = get_next_sat_coordinates(sat_name, time_now)
-		if (el > 0):
-			az = ('%.1f') % azimuth
-			el = ('%.1f') % elevation
-			rotate(ser, az, el)
-		time.sleep(10)
 
 if __name__ == "__main__":
 	main()
