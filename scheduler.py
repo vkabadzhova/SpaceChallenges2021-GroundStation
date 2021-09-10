@@ -64,8 +64,7 @@ def schedule_start(sat_name, reservation_time):
     logging.info("Satellite's tracking scheduled")
 
     # schedule the start 3 minutes prior to the event in order to try to download the tle files
-    new_reservation_time = reservation_time - datetime.timedelta(seconds=3)
-    reservation_time_str = new_reservation_time.strftime("%H:%M:%S")
+    reservation_time_str = reservation_time.strftime("%H:%M:%S")
     schedule.every().day.at(reservation_time_str).do(start_tracking_procedures, sat_name)
 
 
