@@ -87,7 +87,7 @@ void StepperMotor::rotateSteps(bool dir, int steps, int microsecondsSpeed)
   for(int i =0; i<steps; i++)
   {
     OneStep(dir);
-       delay(microsecondsSpeed);
+      delay(microsecondsSpeed);
     //  delayMicroseconds(microseondsSpeed); It doesn't work with this!
   }
 }
