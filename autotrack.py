@@ -11,7 +11,7 @@ gelaLon, gelaLat, gelaAlt = gela
 
 
 try:
-	port = [x for x in list(serial.tools.list_ports.comports())[0] if 'COM' in x][0]
+	port = [x for x in list(serial.tools.list_ports.comports())[0] if 'ACM' in x][0]
 	ser = serial.Serial(port, 9600)
 	time.sleep(.1) # does not work without the delay
 except:
