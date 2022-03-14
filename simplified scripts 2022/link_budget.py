@@ -1,7 +1,12 @@
 from math import *
+from scipy import special
+
+packetSize=64 #bits/symbols
 
 def dB(a):
     return 10*log10(a)
+def dBinv(a):#inverse function
+    return 10**(a/10)
 
 parameters = ['Gt','Pt','Gr','Ts','r','Freq','La','R']
 param={}#all in dB
@@ -23,25 +28,44 @@ def SNR():#signal-to-noise-ratio or Eb/No
 
 def BER():#bit eror rate from txt file or from given SNR
     return erfc(sqrt(10**(SNR()/10)))/2 #QPSK
-def BER(SNR):
+def BER2(SNR):
     return erfc(sqrt(10**(SNR/10)))/2 #QPSK
 
 def PER():#packet eror rate from txt file or from given BER, only true for QPSK (2QPSK) modulation scheme
-    return 1-e**(64*log(1-BER()))
-def PER(BER):
-    return 1-e**(64*log(1-BER))
+    return 1-e**(packetSize*log(1-BER()))
+def PER2(BER):
+    return 1-e**(packetSize*log(1-BER))
 
+
+def BERinv(per):#inverse function
+    return 1-(1-per)**(1/64)
+def SNRinv(ber):#inverse function
+    return 10*2*log10(special.erfcinv(2*ber))
+
+
+def standardDeviation(values):
+    avg=0
+    for a in values:
+        avg+=a
+    avg/=len(values)
+    meanQuadratic=0
+    for a in values:
+        meanQuadratic+=(a-avg)**2
+    meanQuadratic=(meanQuadratic/len(values))**.5
+    return meanQuadratic
 
 #the code below was used to generate values for graphs (BER/SNR) and (BER/Receiver Gain)
-""" 
+######################################################################################
+"""
 def fastMath1():
-    resolution=10
+    resolution=1
     #param['Ts']=dB(1500)
+    pers=[99.33,94.35,77.915,59.05,50.5,48,42.225,44.57,45.725,45.2,40.965,39.55,43.35]
     calc={}
-    for i in range(10*resolution,20*resolution+1):
+    for i in range(10*resolution,22*resolution+1):
         param['Gr']=i/resolution
-        names=['SNR','BER','PER','Gr']
-        calc[param['Gr']] = (SNR(),BER(),PER())
+        names=['SNR','BER','PER', 'BERinv', 'SNRinv','Gr']
+        calc[param['Gr']] = (SNR(),BER(),PER(),BERinv(pers[i-10]/100),SNRinv(BERinv(pers[i-10]/100)))
         #print(SNR(),'\t', BER(),'\t\t\t',PER())
 
     print(names[-1])
